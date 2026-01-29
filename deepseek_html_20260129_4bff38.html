@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - AmanCipher Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Reuse styles from user panel with modifications */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        :root {
+            --primary: #6c63ff;
+            --primary-dark: #554fd8;
+            --secondary: #ff6584;
+            --accent: #36d1dc;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --light: #f5f5f7;
+            --gray: #8e8e93;
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --glow: 0 0 20px rgba(108, 99, 255, 0.5);
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #F44336;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Background Animation */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(-45deg, #0a0a0a, #121212, #1a1a2e, #16213e);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.15;
+            animation: float 25s infinite linear;
+        }
+
+        .shape:nth-child(1) {
+            background: var(--primary);
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            background: var(--secondary);
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            left: 80%;
+            animation-delay: 5s;
+        }
+
+        .shape:nth-child(3) {
+            background: var(--accent);
+            width: 250px;
+            height: 250px;
+            top: 20%;
+            left: 85%;
+            animation-delay: 10s;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(20px, 50px) rotate(90deg); }
+            50% { transform: translate(0, 100px) rotate(180deg); }
+            75% { transform: translate(-20px, 50px) rotate(270deg); }
+        }
+
+        /* Admin Container */
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        /* Header */
+        .admin-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .admin-logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--accent), var(--secondary));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradientText 3s ease infinite;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-subtitle {
+            color: var(--gray);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        /* Tabs */
+        .admin-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            padding: 0.8rem 1.8rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: var(--light);
+            background: var(--glass);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1.1rem;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 3px;
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--light);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Styling */
+        .form-container {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+            color: var(--light);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .required::after {
+            content: '*';
+            color: var(--danger);
+            margin-left: 4px;
+        }
+
+        .form-input, .form-textarea {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+            color: var(--light);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.2);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-help {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.9rem 2rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--glow);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--light);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, var(--danger), #d32f2f);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(244, 67, 54, 0.3);
+        }
+
+        /* Apps List */
+        .apps-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .app-item {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .app-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .app-item-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-item-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            object-fit: cover;
+        }
+
+        .app-item-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .app-item-desc {
+            color: var(--gray);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .app-item-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .app-item-actions {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn.edit {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        .action-btn.edit:hover {
+            background: rgba(255, 152, 0, 0.2);
+        }
+
+        .action-btn.delete {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .action-btn.delete:hover {
+            background: rgba(244, 67, 54, 0.2);
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-success {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+        }
+
+        .status-error {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: var(--danger);
+        }
+
+        .status-warning {
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            color: var(--warning);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--gray);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            opacity: 0.5;
+        }
+
+        /* Footer */
+        .admin-footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 1.5rem;
+            }
+            
+            .admin-logo {
+                font-size: 2.5rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .apps-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .admin-logo {
+                font-size: 2rem;
+            }
+            
+            .app-item-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .app-item-actions {
+                flex-direction: column;
+            }
+            
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation"></div>
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1 class="admin-logo">AmanCipher Admin<span style="font-size: 1.5rem;">🇮🇳</span></h1>
+            <p class="admin-subtitle">Manage Apps & Content</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <button class="tab-btn active" data-tab="add-app">
+                <i class="fas fa-plus-circle"></i> Add New App
+            </button>
+            <button class="tab-btn" data-tab="manage-apps">
+                <i class="fas fa-list"></i> Manage Apps
+            </button>
+        </div>
+
+        <!-- Status Message Container -->
+        <div id="status-message"></div>
+
+        <!-- Add App Tab -->
+        <div id="add-app" class="tab-content active">
+            <div class="form-container">
+                <h2 class="form-title">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload New App
+                </h2>
+                
+                <form id="app-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label required">
+                                <i class="fas fa-heading"></i> App Name
+                            </label>
+                            <input type="text" class="form-input" id="app-name" required 
+                                   placeholder="Enter app name (e.g., WhatsApp MOD)">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label required">
+                                <i class="fas fa-image"></i> Logo URL
+                            </label>
+                            <input type="url" class="form-input" id="app-logo" required 
+                                   placeholder="https://example.com/app-logo.png">
+                            <p class="form-help">Direct link to app logo/image (PNG, JPG)</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label required">
+                                <i class="fas fa-link"></i> Download URL
+                            </label>
+                            <input type="url" class="form-input" id="app-download" required 
+                                   placeholder="https://example.com/app-download.apk">
+                            <p class="form-help">Direct download link for the APK/file</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fab fa-instagram"></i> Instagram URL
+                            </label>
+                            <input type="url" class="form-input" id="app-instagram" 
+                                   placeholder="https://instagram.com/yourchannel">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fab fa-youtube"></i> YouTube URL
+                            </label>
+                            <input type="url" class="form-input" id="app-youtube" 
+                                   placeholder="https://youtube.com/yourchannel">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fab fa-telegram"></i> Telegram URL
+                            </label>
+                            <input type="url" class="form-input" id="app-telegram" 
+                                   placeholder="https://t.me/yourchannel">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label required">
+                            <i class="fas fa-align-left"></i> Description
+                        </label>
+                        <textarea class="form-textarea" id="app-description" required 
+                                  placeholder="Describe the app features, MOD capabilities, etc."></textarea>
+                        <p class="form-help">Detailed description about the app and its features</p>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="reset-form">
+                            <i class="fas fa-redo"></i> Reset Form
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="submit-app">
+                            <i class="fas fa-paper-plane"></i> Upload App
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="admin-footer">
+                <p>AmanCipher Store Admin Panel &copy; 2023 | All changes appear in real-time</p>
+            </div>
+        </div>
+
+        <!-- Manage Apps Tab -->
+        <div id="manage-apps" class="tab-content">
+            <div class="form-container">
+                <h2 class="form-title">
+                    <i class="fas fa-cogs"></i> Manage Apps
+                </h2>
+                
+                <div id="apps-list-container">
+                    <div class="loading">
+                        <div class="spinner" style="margin: 0 auto;"></div>
+                        <p style="text-align: center; margin-top: 1rem;">Loading apps...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-footer">
+                <p>AmanCipher Store Admin Panel &copy; 2023 | Click on apps to edit or delete</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBXSYoamsJiCEK732tmgRfXQ14coelftuk",
+            authDomain: "amancipher-store.firebaseapp.com",
+            databaseURL: "https://amancipher-store-default-rtdb.firebaseio.com",
+            projectId: "amancipher-store",
+            storageBucket: "amancipher-store.firebasestorage.app",
+            messagingSenderId: "657484897457",
+            appId: "1:657484897457:web:f6b4c01197d82d2bdd9690",
+            measurementId: "G-GJVJLE8N4N"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // DOM Elements
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const appForm = document.getElementById('app-form');
+        const resetFormBtn = document.getElementById('reset-form');
+        const appsListContainer = document.getElementById('apps-list-container');
+        const statusMessage = document.getElementById('status-message');
+
+        // Current state
+        let currentEditingAppId = null;
+        let apps = [];
+
+        // Switch tabs
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // Update active tab button
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Show corresponding tab content
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === tabId) {
+                        content.classList.add('active');
+                        
+                        // Load apps if managing apps tab
+                        if (tabId === 'manage-apps') {
+                            loadAppsForManagement();
+                        }
+                    }
+                });
+            });
+        });
+
+        // Show status message
+        function showStatus(message, type = 'success') {
+            statusMessage.innerHTML = `
+                <div class="status-message status-${type}">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    ${message}
+                </div>
+            `;
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                statusMessage.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load apps for management
+        function loadAppsForManagement() {
+            appsListContainer.innerHTML = `
+                <div class="loading">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="text-align: center; margin-top: 1rem;">Loading apps...</p>
+                </div>
+            `;
+            
+            const appsRef = database.ref('apps');
+            appsRef.on('value', (snapshot) => {
+                apps = [];
+                const data = snapshot.val();
+                
+                if (data) {
+                    // Convert object to array
+                    Object.keys(data).forEach(key => {
+                        apps.push({
+                            id: key,
+                            ...data[key]
+                        });
+                    });
+                    
+                    renderAppsList();
+                } else {
+                    appsListContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-box-open"></i>
+                            </div>
+                            <h3>No Apps Found</h3>
+                            <p>You haven't uploaded any apps yet. Start by adding one!</p>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Render apps list for management
+        function renderAppsList() {
+            if (apps.length === 0) {
+                appsListContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <h3>No Apps Found</h3>
+                        <p>You haven't uploaded any apps yet. Start by adding one!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<div class="apps-list">';
+            
+            apps.forEach(app => {
+                // Format date if available
+                let dateInfo = '';
+                if (app.createdAt) {
+                    const date = new Date(app.createdAt);
+                    dateInfo = date.toLocaleDateString();
+                }
+                
+                html += `
+                    <div class="app-item" data-app-id="${app.id}">
+                        <div class="app-item-header">
+                            <img src="${app.logoUrl || 'https://via.placeholder.com/60x60/6c63ff/ffffff?text=APP'}" 
+                                 alt="${app.name}" class="app-item-icon">
+                            <div>
+                                <h3 class="app-item-name">${app.name}</h3>
+                                <div class="app-item-meta">
+                                    ${dateInfo ? `<span class="meta-item"><i class="far fa-calendar"></i> ${dateInfo}</span>` : ''}
+                                    ${app.downloadUrl ? `<span class="meta-item"><i class="fas fa-download"></i> Download Available</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="app-item-desc">${app.description || 'No description provided.'}</p>
+                        
+                        <div class="app-item-actions">
+                            <button class="action-btn edit" onclick="editApp('${app.id}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="action-btn delete" onclick="deleteApp('${app.id}', '${app.name}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            appsListContainer.innerHTML = html;
+        }
+
+        // Form submission
+        appForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const appName = document.getElementById('app-name').value.trim();
+            const appLogo = document.getElementById('app-logo').value.trim();
+            const appDownload = document.getElementById('app-download').value.trim();
+            const appDescription = document.getElementById('app-description').value.trim();
+            const appInstagram = document.getElementById('app-instagram').value.trim();
+            const appYoutube = document.getElementById('app-youtube').value.trim();
+            const appTelegram = document.getElementById('app-telegram').value.trim();
+            
+            // Validate required fields
+            if (!appName || !appLogo || !appDownload || !appDescription) {
+                showStatus('Please fill all required fields!', 'error');
+                return;
+            }
+            
+            // Prepare app data
+            const appData = {
+                name: appName,
+                logoUrl: appLogo,
+                downloadUrl: appDownload,
+                description: appDescription,
+                createdAt: Date.now()
+            };
+            
+            // Add optional social links if provided
+            if (appInstagram) appData.instagramUrl = appInstagram;
+            if (appYoutube) appData.youtubeUrl = appYoutube;
+            if (appTelegram) appData.telegramUrl = appTelegram;
+            
+            // Reference to apps in database
+            const appsRef = database.ref('apps');
+            
+            if (currentEditingAppId) {
+                // Update existing app
+                appsRef.child(currentEditingAppId).update(appData)
+                    .then(() => {
+                        showStatus(`App "${appName}" updated successfully!`, 'success');
+                        resetForm();
+                        currentEditingAppId = null;
+                        
+                        // Update button text
+                        document.getElementById('submit-app').innerHTML = '<i class="fas fa-paper-plane"></i> Upload App';
+                    })
+                    .catch(error => {
+                        showStatus(`Error updating app: ${error.message}`, 'error');
+                    });
+            } else {
+                // Add new app
+                appsRef.push(appData)
+                    .then(() => {
+                        showStatus(`App "${appName}" added successfully!`, 'success');
+                        resetForm();
+                        
+                        // Switch to manage apps tab after adding
+                        setTimeout(() => {
+                            document.querySelector('[data-tab="manage-apps"]').click();
+                        }, 1500);
+                    })
+                    .catch(error => {
+                        showStatus(`Error adding app: ${error.message}`, 'error');
+                    });
+            }
+        });
+
+        // Reset form
+        resetFormBtn.addEventListener('click', resetForm);
+        
+        function resetForm() {
+            appForm.reset();
+            currentEditingAppId = null;
+            document.getElementById('submit-app').innerHTML = '<i class="fas fa-paper-plane"></i> Upload App';
+        }
+
+        // Edit app
+        window.editApp = function(appId) {
+            const app = apps.find(a => a.id === appId);
+            
+            if (!app) return;
+            
+            // Fill form with app data
+            document.getElementById('app-name').value = app.name || '';
+            document.getElementById('app-logo').value = app.logoUrl || '';
+            document.getElementById('app-download').value = app.downloadUrl || '';
+            document.getElementById('app-description').value = app.description || '';
+            document.getElementById('app-instagram').value = app.instagramUrl || '';
+            document.getElementById('app-youtube').value = app.youtubeUrl || '';
+            document.getElementById('app-telegram').value = app.telegramUrl || '';
+            
+            // Set current editing app ID
+            currentEditingAppId = appId;
+            
+            // Update button text
+            document.getElementById('submit-app').innerHTML = '<i class="fas fa-save"></i> Update App';
+            
+            // Switch to add app tab
+            document.querySelector('[data-tab="add-app"]').click();
+            
+            // Scroll to form
+            document.getElementById('app-form').scrollIntoView({ behavior: 'smooth' });
+            
+            showStatus(`Editing "${app.name}" - Update the fields and click "Update App"`, 'warning');
+        };
+
+        // Delete app
+        window.deleteApp = function(appId, appName) {
+            if (!confirm(`Are you sure you want to delete "${appName}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            const appRef = database.ref(`apps/${appId}`);
+            
+            appRef.remove()
+                .then(() => {
+                    showStatus(`App "${appName}" deleted successfully!`, 'success');
+                    
+                    // Reload apps list
+                    loadAppsForManagement();
+                })
+                .catch(error => {
+                    showStatus(`Error deleting app: ${error.message}`, 'error');
+                });
+        };
+
+        // Initialize
+        window.onload = function() {
+            // Animate header
+            const logo = document.querySelector('.admin-logo');
+            setTimeout(() => {
+                logo.style.animation = 'gradientText 3s ease infinite, fadeIn 1s ease forwards';
+            }, 300);
+        };
+    </script>
+</body>
+</html>
